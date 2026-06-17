@@ -1,7 +1,8 @@
+package com.motorph.main;
+
 /*
  * Author: Timothy Justin Sonido Gacula
  */
-package com.motorph.main;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -17,6 +18,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -529,7 +531,7 @@ public class GUI extends JFrame {
             LocalDate.of(year, monthNum, endDay);
             
             return true;
-        } catch (java.time.DateTimeException | NumberFormatException ex) { 
+        } catch (DateTimeException | NumberFormatException ex) { 
             return false; 
         }
     }
@@ -620,7 +622,7 @@ public class GUI extends JFrame {
         txtPayCoverage.setForeground(Color.GRAY); 
         txtPayCoverage.setBorder(normalBorder);
         
-        payHelp = new JLabel("Enter the payroll period exactly as: Month D-D, YYYY"); 
+        payHelp = new JLabel("Enter the payroll period exactly as: Month D-D, YYYY (*Note: Only 2024 attendance data is available)"); 
         payHelp.setFont(new Font("SansSerif", Font.PLAIN, 11)); 
         payHelp.setForeground(Color.GRAY);
 
@@ -713,11 +715,11 @@ public class GUI extends JFrame {
             if (!cov.equals(PLACEHOLDER_PAY_COVERAGE) && !cov.isEmpty()) {
                 if (!validCov) { 
                     txtPayCoverage.setBorder(glowBorder); 
-                    payHelp.setText("Invalid format or dates. Use: Month D-D, YYYY"); 
+                    payHelp.setText("Invalid format or dates. Use: Month D-D, YYYY (*Note: Only 2024 attendance data is available)"); 
                     payHelp.setForeground(Color.RED); 
                 } else { 
                     txtPayCoverage.setBorder(normalBorder); 
-                    payHelp.setText("Valid coverage format."); 
+                    payHelp.setText("Valid coverage format. (*Note: Only 2024 attendance data is available)"); 
                     payHelp.setForeground(new Color(0, 130, 0)); 
                 }
             }
@@ -783,7 +785,7 @@ public class GUI extends JFrame {
                     txtPayCoverage.setText(PLACEHOLDER_PAY_COVERAGE); 
                     txtPayCoverage.setForeground(Color.GRAY); 
                     txtPayCoverage.setBorder(normalBorder); 
-                    payHelp.setText("Enter the payroll period exactly as: Month D-D, YYYY"); 
+                    payHelp.setText("Enter the payroll period exactly as: Month D-D, YYYY (*Note: Only 2024 attendance data is available)"); 
                     payHelp.setForeground(Color.GRAY); 
                 } 
             } 
@@ -809,7 +811,7 @@ public class GUI extends JFrame {
             txtPayCoverage.setText(PLACEHOLDER_PAY_COVERAGE); 
             txtPayCoverage.setForeground(Color.GRAY); 
             txtPayCoverage.setBorder(normalBorder); 
-            payHelp.setText("Enter the payroll period exactly as: Month D-D, YYYY"); 
+            payHelp.setText("Enter the payroll period exactly as: Month D-D, YYYY (*Note: Only 2024 attendance data is available)"); 
             payHelp.setForeground(Color.GRAY);
             
             btnCompute.setEnabled(false); 
@@ -977,7 +979,9 @@ public class GUI extends JFrame {
         Runnable applyFilters = () -> {
             String query = txtSearch.getText().equals(PLACEHOLDER_SEARCH) ? "" : txtSearch.getText().trim();
             String stat = (String) statusFilter.getSelectedItem();
-            List<RowFilter<DefaultTableModel, Object>> filters = new ArrayList<>();
+            
+            // Fix: Changed to <Object, Object> to resolve Type Mismatch (red lines) with Java 8 generics
+            List<RowFilter<Object, Object>> filters = new ArrayList<>();
             
             if (!query.isEmpty()) {
                 filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(query), 0, 1, 2));
