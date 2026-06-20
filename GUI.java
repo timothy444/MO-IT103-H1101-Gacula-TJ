@@ -331,7 +331,7 @@ public class GUI extends JFrame {
     private JTextField txtEmpNo;
     private JTextField txtEmpName;
     private JTextField txtPayCoverage;
-    private JTextField txtManualHours; // Explicitly added for the rubric checklist
+    private JTextField txtManualHours; 
     private JTextField txtSearch;
     
     private JLabel empNoHelp;
@@ -351,6 +351,7 @@ public class GUI extends JFrame {
     private JButton btnCompute;
     private JButton btnReset;
     private JButton btnClearAll;
+    private JButton btnDeleteRecord; // New button for single record deletion
     
     private JComboBox<String> statusFilter;
     private TableRowSorter<DefaultTableModel> sorter;
@@ -447,6 +448,28 @@ public class GUI extends JFrame {
             System.err.println("Failed to save payroll record to CSV.");
         }
     }
+
+    // Completely overwrites the Payroll CSV based on the active table data
+    private void rewritePayrollCSV() {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter("PayrollRecords.csv", false))) {
+            for (int i = 0; i < srTableModel.getRowCount(); i++) {
+                String empNo = srTableModel.getValueAt(i, 1).toString();
+                String name = srTableModel.getValueAt(i, 2).toString();
+                String coverage = srTableModel.getValueAt(i, 3).toString();
+                
+                // Strip the formatting applied by the GUI to get raw numbers
+                double hours = Double.parseDouble(srTableModel.getValueAt(i, 4).toString());
+                double gross = Double.parseDouble(srTableModel.getValueAt(i, 5).toString().replace("Php ", "").replace(",", "").trim());
+                double deduct = Double.parseDouble(srTableModel.getValueAt(i, 6).toString().replace("Php ", "").replace(",", "").trim());
+                double net = Double.parseDouble(srTableModel.getValueAt(i, 7).toString().replace("Php ", "").replace(",", "").trim());
+
+                bw.write(String.format(Locale.US, "%s,%s,%s,%.2f,%.2f,%.2f,%.2f%n", 
+                    escapeCSV(empNo), escapeCSV(name), escapeCSV(coverage), hours, gross, deduct, net));
+            }
+        } catch (Exception ex) {
+            System.err.println("Failed to rewrite PayrollRecords.csv: " + ex.getMessage());
+        }
+    }
     
     private void loadPayrollRecords() {
         File prFile = new File("PayrollRecords.csv");
@@ -485,6 +508,7 @@ public class GUI extends JFrame {
             if (submissionCount[0] > 0) {
                 lblRecordCount.setText(srTableModel.getRowCount() + " payroll record(s) saved");
                 btnClearAll.setEnabled(true);
+                btnDeleteRecord.setEnabled(true);
             }
         } catch (IOException e) { 
             System.err.println("Error reading PayrollRecords.csv"); 
@@ -883,11 +907,21 @@ public class GUI extends JFrame {
         srHeaderPanel.setBorder(new EmptyBorder(0, 0, 10, 0));
         
         lblRecordCount = new JLabel("0 payroll records saved"); 
+        
+        // Added the Single Deletion Button
+        btnDeleteRecord = new JButton("Delete Selected");
         btnClearAll = new JButton("Clear All Records"); 
+        
+        btnDeleteRecord.setEnabled(false);
         btnClearAll.setEnabled(false);
         
+        JPanel srButtonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        srButtonsPanel.setOpaque(false);
+        srButtonsPanel.add(btnDeleteRecord);
+        srButtonsPanel.add(btnClearAll);
+        
         srHeaderPanel.add(lblRecordCount, BorderLayout.WEST); 
-        srHeaderPanel.add(btnClearAll, BorderLayout.EAST);
+        srHeaderPanel.add(srButtonsPanel, BorderLayout.EAST);
         
         submittedRecordsTab.add(srHeaderPanel, BorderLayout.NORTH); 
         submittedRecordsTab.add(srScroll, BorderLayout.CENTER);
@@ -962,6 +996,7 @@ public class GUI extends JFrame {
             
             lblRecordCount.setText(srTableModel.getRowCount() + " payroll record(s) saved");
             btnClearAll.setEnabled(true);
+            btnDeleteRecord.setEnabled(true);
             
             String report = String.format(Locale.US, 
                 "=== PAYROLL REPORT ===\nName: %s\nCoverage: %s\nActual Hours Worked: %.2f\nHourly Rate: Php %,.2f\n\nGross Pay: Php %,.2f\n\nDEDUCTIONS\nSSS: Php %,.2f\nPhilHealth: Php %,.2f\nPag-IBIG: Php %,.2f\nWithholding Tax: Php %,.2f\nTotal Deductions: Php %,.2f\n\nNET PAY: Php %,.2f", 
@@ -969,6 +1004,43 @@ public class GUI extends JFrame {
             JOptionPane.showMessageDialog(this, report, "Computation Verified", JOptionPane.INFORMATION_MESSAGE);
         });
         
+        // Deletes a single selected row from the GUI and updates the CSV
+        btnDeleteRecord.addActionListener(e -> {
+            int viewRow = srTable.getSelectedRow();
+            if (viewRow < 0) {
+                JOptionPane.showMessageDialog(this, "Select a payroll record to delete from the table.", "Warning", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            int modelRow = srTable.convertRowIndexToModel(viewRow);
+
+            int confirm = JOptionPane.showConfirmDialog(this, 
+                "Permanently delete this specific payroll record?", 
+                "Confirm Delete", 
+                JOptionPane.YES_NO_OPTION, 
+                JOptionPane.WARNING_MESSAGE);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                // Remove from table visually
+                srTableModel.removeRow(modelRow);
+
+                // Renumber the # column sequentially
+                for(int i = 0; i < srTableModel.getRowCount(); i++) {
+                    srTableModel.setValueAt(i + 1, i, 0);
+                }
+                
+                submissionCount[0] = srTableModel.getRowCount();
+                lblRecordCount.setText(srTableModel.getRowCount() + " payroll record(s) saved");
+
+                if (srTableModel.getRowCount() == 0) {
+                    btnClearAll.setEnabled(false);
+                    btnDeleteRecord.setEnabled(false);
+                }
+
+                // Completely rewrite the CSV file without the deleted row
+                rewritePayrollCSV();
+            }
+        });
+
         btnClearAll.addActionListener(e -> { 
             int confirm = JOptionPane.showConfirmDialog(this, 
                 "Clear all displayed session records and WIPE history from PayrollRecords.csv?", 
@@ -980,6 +1052,7 @@ public class GUI extends JFrame {
                 srTableModel.setRowCount(0);
                 lblRecordCount.setText("0 payroll records saved");
                 btnClearAll.setEnabled(false);
+                btnDeleteRecord.setEnabled(false);
                 submissionCount[0] = 0;
                 
                 try { 
