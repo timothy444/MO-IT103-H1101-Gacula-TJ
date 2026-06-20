@@ -225,6 +225,17 @@ class EmployeeDataManager {
         return new ArrayList<>(records.values()); 
     }
     
+    // Returns only the count of ACTIVE employees for the status bar
+    public int getActiveCount() {
+        int count = 0;
+        for (EmployeeRecord r : records.values()) {
+            if (!r.status.equalsIgnoreCase("Deleted")) {
+                count++;
+            }
+        }
+        return count;
+    }
+    
     public EmployeeRecord find(String empNo) { 
         return records.get(empNo); 
     }
@@ -234,8 +245,13 @@ class EmployeeDataManager {
         save(); 
     }
     
+    // SOFT DELETE: Changes status to "Deleted" to prevent ID duplication across app restarts
     public void delete(String empNo) throws IOException { 
-        records.remove(empNo); 
+        EmployeeRecord rec = records.get(empNo);
+        if (rec != null) {
+            rec.status = "Deleted";
+            rec.rawData[10] = "Deleted";
+        }
         save(); 
     }
     
@@ -385,18 +401,22 @@ public class GUI extends JFrame {
             protected void done() {
                 refreshEmployeeTableData();
                 loadPayrollRecords();
-                lblDatabase.setText(dataManager.list().size() + " employees in database");
+                lblDatabase.setText(dataManager.getActiveCount() + " employees in database");
             }
         };
         worker.execute();
     }
     
-    // Updated to load ALL 19 columns into the GUI table to meet mentor requirements
+    // Loads ALL 19 columns, but strictly hides "Deleted" employees from the interface
     private void refreshEmployeeTableData() {
         empTableModel.setRowCount(0);
         ArrayList<EmployeeRecord> recs = dataManager.list();
         
         for (EmployeeRecord r : recs) {
+            // Skips visually loading the soft-deleted records!
+            if (r.status.equalsIgnoreCase("Deleted")) {
+                continue;
+            }
             empTableModel.addRow(r.rawData);
         }
     }
@@ -546,6 +566,7 @@ public class GUI extends JFrame {
                 return false;
             }
 
+            // Validates against real calendar rules (e.g. Feb 30th throws exception)
             LocalDate.of(year, monthNum, startDay);
             LocalDate.of(year, monthNum, endDay);
             
@@ -717,7 +738,8 @@ public class GUI extends JFrame {
             String cov = txtPayCoverage.getText().trim();
             EmployeeRecord rec = dataManager.find(no);
             
-            boolean validEmpNo = rec != null && no.matches("^\\d{5}$");
+            // Rejects if the found employee is "Deleted"
+            boolean validEmpNo = rec != null && no.matches("^\\d{5}$") && !rec.status.equalsIgnoreCase("Deleted");
             
             if (!no.equals(PLACEHOLDER_EMP_NO) && !no.isEmpty()) {
                 if (!validEmpNo) { 
@@ -925,7 +947,7 @@ public class GUI extends JFrame {
             
             EmployeeRecord emp = dataManager.find(empNo);
             
-            if (emp == null) return; 
+            if (emp == null || emp.status.equalsIgnoreCase("Deleted")) return; 
             
             String[] covParts = coverage.split(" ");
             int monthNum = getMonthNumber(covParts[0]);
@@ -1079,7 +1101,6 @@ public class GUI extends JFrame {
         
         employeeDatabaseTab.add(topDbPanel, BorderLayout.NORTH);
 
-        // Updated array to show ALL 19 columns
         String[] dbColumns = {
             "Employee #", "Last Name", "First Name", "Birthday", "Address", "Phone Number", 
             "SSS #", "Philhealth #", "TIN #", "Pag-ibig #", "Status", "Position", 
@@ -1097,10 +1118,8 @@ public class GUI extends JFrame {
         empTable.getTableHeader().setBackground(new Color(40, 40, 40)); 
         empTable.getTableHeader().setForeground(Color.WHITE);
         
-        // Turns off auto-resizing so all 19 columns can scroll horizontally without being squished
         empTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         
-        // Sets a default width for the columns so they are easily readable
         for(int i = 0; i < dbColumns.length; i++) {
             empTable.getColumnModel().getColumn(i).setPreferredWidth(130);
         }
@@ -1120,7 +1139,6 @@ public class GUI extends JFrame {
                 filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(query), 0, 1, 2));
             }
             if (!"All".equals(stat)) {
-                // Status is now at index 10 in the 19-column array
                 filters.add(RowFilter.regexFilter("^" + Pattern.quote(stat) + "$", 10)); 
             }
             
@@ -1170,15 +1188,15 @@ public class GUI extends JFrame {
             String empNo = (String) empTableModel.getValueAt(modelRow, 0); 
             
             int confirm = JOptionPane.showConfirmDialog(this, 
-                "Permanently delete Employee #" + empNo + "?", 
+                "Permanently delete Employee #" + empNo + "?\n\n(Note: This employee's status will be marked as 'Deleted' to prevent ID duplication.)", 
                 "Confirm", 
                 JOptionPane.YES_NO_OPTION);
                 
             if (confirm == JOptionPane.YES_OPTION) {
                 try {
-                    dataManager.delete(empNo);
+                    dataManager.delete(empNo); 
                     empTableModel.removeRow(modelRow);
-                    lblDatabase.setText(dataManager.list().size() + " employees in database");
+                    lblDatabase.setText(dataManager.getActiveCount() + " employees in database");
                 } catch (IOException ex) { 
                     JOptionPane.showMessageDialog(this, "Error deleting record.", "Error", JOptionPane.ERROR_MESSAGE); 
                 }
@@ -1195,23 +1213,23 @@ public class GUI extends JFrame {
         JPanel formPanel = new JPanel(new GridLayout(7, 2, 5, 5)); 
         formPanel.setBorder(new EmptyBorder(10, 15, 10, 15));
         
-        // --- AUTO GENERATE EMPLOYEE NUMBER LOGIC ---
         String nextEmpNo = "";
         if (existing != null) {
             nextEmpNo = existing.empNo;
         } else {
             int maxId = 10000;
+            // Scans ALL records (even hidden "Deleted" ones) so it never duplicates an ID
             for (EmployeeRecord rec : dataManager.list()) {
                 try {
                     int currentId = Integer.parseInt(rec.empNo);
                     if (currentId > maxId) maxId = currentId;
                 } catch (NumberFormatException ignored) {}
             }
-            nextEmpNo = String.valueOf(maxId + 1); // Guarantees a unique ID!
+            nextEmpNo = String.valueOf(maxId + 1);
         }
         
         JTextField fNo = new JTextField(nextEmpNo); 
-        fNo.setEditable(false); // Locked so user cannot duplicate IDs
+        fNo.setEditable(false); 
         
         JTextField fFirst = new JTextField(existing != null ? existing.rawData[2] : "");
         JTextField fLast = new JTextField(existing != null ? existing.rawData[1] : "");
@@ -1224,15 +1242,14 @@ public class GUI extends JFrame {
         
         JTextField fSal = new JTextField(existing != null ? String.valueOf(existing.basicSalary) : "");
         JTextField fRate = new JTextField(existing != null ? String.valueOf(existing.rate) : "");
-        fRate.setEditable(false); // Locked so it is strictly tied to Basic Salary
+        fRate.setEditable(false); 
         
-        // --- AUTO-CALCULATE HOURLY RATE LOGIC ---
         fSal.getDocument().addDocumentListener(buildDocumentListener(() -> {
             if (fSal.isFocusOwner()) {
                 SwingUtilities.invokeLater(() -> {
                     try {
                         double sal = Double.parseDouble(fSal.getText().replace(",", "").trim());
-                        double rate = sal / 168.0; // Standard MotorPH divisor
+                        double rate = sal / 168.0; 
                         fRate.setText(String.format(Locale.US, "%.2f", rate));
                     } catch (Exception ex) {
                         fRate.setText("0.00");
@@ -1278,7 +1295,7 @@ public class GUI extends JFrame {
                 
                 if (existing == null) {
                     String[] raw = new String[19];
-                    for (int i = 0; i < 19; i++) raw[i] = "N/A"; // Fills empty columns with N/A
+                    for (int i = 0; i < 19; i++) raw[i] = "N/A"; 
                     
                     raw[0] = fNo.getText().trim(); 
                     raw[1] = fLast.getText().trim(); 
@@ -1291,14 +1308,13 @@ public class GUI extends JFrame {
                     EmployeeRecord n = new EmployeeRecord(raw);
                     dataManager.addOrUpdate(n);
                     
-                    empTableModel.addRow(n.rawData); // Adds all 19 columns to GUI
+                    empTableModel.addRow(n.rawData); 
                 } else {
                     existing.updateData(fFirst.getText(), fLast.getText(), cbStatus.getSelectedItem().toString(), fPos.getText(), sal, rate);
                     dataManager.addOrUpdate(existing);
                     
                     for (int i = 0; i < empTableModel.getRowCount(); i++) {
                         if (empTableModel.getValueAt(i, 0).equals(existing.empNo)) {
-                            // Update all 19 columns in the GUI dynamically
                             for(int col = 0; col < 19; col++) {
                                 empTableModel.setValueAt(existing.rawData[col], i, col);
                             }
@@ -1306,7 +1322,7 @@ public class GUI extends JFrame {
                         }
                     }
                 }
-                lblDatabase.setText(dataManager.list().size() + " employees in database");
+                lblDatabase.setText(dataManager.getActiveCount() + " employees in database");
                 dlg.dispose();
             } catch (NumberFormatException e) { 
                 JOptionPane.showMessageDialog(dlg, "Basic Salary must be a valid number.", "Validation Error", JOptionPane.ERROR_MESSAGE); 
