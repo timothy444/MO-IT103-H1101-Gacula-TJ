@@ -10,6 +10,7 @@ The MotorPH Payroll System is a Java Swing desktop application designed to manag
 
 ## Project Structure
 - `PayrollPortalMain` – main GUI class of the application.
+- `Attendance` – stores or represents attendance record data
 - `AttendanceManager` – handles attendance-based hour computation. 
 - `PayrollCalculator` – handles payroll calculations such as gross pay, deductions, and net pay. 
 - `PayrollRecordManager` – handles loading, saving, and deleting payroll records. 
