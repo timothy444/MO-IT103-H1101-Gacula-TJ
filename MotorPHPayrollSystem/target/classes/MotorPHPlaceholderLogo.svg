@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="400" height="400">
+    <!-- Outer Ring (Deep Mocha) -->
+    <circle cx="100" cy="100" r="95" fill="#fdfbf7" stroke="#4a3b2c" stroke-width="6"/>
+    
+    <!-- Secondary Accent Ring (Warm Tan) -->
+    <circle cx="100" cy="100" r="85" fill="#f4ebd8" stroke="#a68a64" stroke-width="2"/>
+    
+    <!-- Inner Emblem Background (Cream) -->
+    <circle cx="100" cy="100" r="70" fill="#fdfbf7" stroke="#4a3b2c" stroke-width="2" stroke-dasharray="4 3"/>
+
+    <!-- Founding Year -->
+    <text x="50%" y="38%" dominant-baseline="middle" text-anchor="middle" font-family="Georgia, serif" font-size="12" font-weight="bold" fill="#8b7355" letter-spacing="3">
+        EST. 2020
+    </text>
+    
+    <!-- Main "MotorPH" Wordmark -->
+    <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" font-weight="900" fill="#4a3b2c">
+        MotorPH
+    </text>
+    
+    <!-- Mission Subtext (Line 1) -->
+    <text x="50%" y="68%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="7" font-weight="bold" fill="#8b7355" letter-spacing="1">
+        THE FIRST CHOICE FOR FILIPINOS
+    </text>
+
+    <!-- Mission Subtext (Line 2) -->
+    <text x="50%" y="76%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="6.5" font-weight="bold" fill="#a68a64" letter-spacing="2">
+        COMPETITIVE &amp; AFFORDABLE
+    </text>
+
+    <!-- Decorative Top Icon (Abstract Sun/Wheel to represent PH) -->
+    <path d="M 100 15 L 100 22 M 90 18 L 94 24 M 110 18 L 106 24 M 83 26 L 89 29 M 117 26 L 111 29" stroke="#a68a64" stroke-width="2" stroke-linecap="round"/>
+</svg>

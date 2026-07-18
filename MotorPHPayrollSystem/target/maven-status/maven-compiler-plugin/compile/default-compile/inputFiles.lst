@@ -1,0 +1,15 @@
+/Users/riangacula/Documents/NetBeansProjects/MotorPHPayrollSystem/src/main/java/com/motorph/manager/AttendanceManager.java
+/Users/riangacula/Documents/NetBeansProjects/MotorPHPayrollSystem/src/main/java/com/motorph/manager/CsvUtil.java
+/Users/riangacula/Documents/NetBeansProjects/MotorPHPayrollSystem/src/main/java/com/motorph/manager/EmployeeFormService.java
+/Users/riangacula/Documents/NetBeansProjects/MotorPHPayrollSystem/src/main/java/com/motorph/manager/EmployeeManager.java
+/Users/riangacula/Documents/NetBeansProjects/MotorPHPayrollSystem/src/main/java/com/motorph/manager/PayrollCalculator.java
+/Users/riangacula/Documents/NetBeansProjects/MotorPHPayrollSystem/src/main/java/com/motorph/manager/PayrollComputationResult.java
+/Users/riangacula/Documents/NetBeansProjects/MotorPHPayrollSystem/src/main/java/com/motorph/manager/PayrollRecordManager.java
+/Users/riangacula/Documents/NetBeansProjects/MotorPHPayrollSystem/src/main/java/com/motorph/manager/PayrollService.java
+/Users/riangacula/Documents/NetBeansProjects/MotorPHPayrollSystem/src/main/java/com/motorph/model/Attendance.java
+/Users/riangacula/Documents/NetBeansProjects/MotorPHPayrollSystem/src/main/java/com/motorph/model/Employee.java
+/Users/riangacula/Documents/NetBeansProjects/MotorPHPayrollSystem/src/main/java/com/motorph/model/PayrollRecord.java
+/Users/riangacula/Documents/NetBeansProjects/MotorPHPayrollSystem/src/main/java/com/motorph/ui/ClipboardHelper.java
+/Users/riangacula/Documents/NetBeansProjects/MotorPHPayrollSystem/src/main/java/com/motorph/ui/PayrollPortalMain.java
+/Users/riangacula/Documents/NetBeansProjects/MotorPHPayrollSystem/src/main/java/com/motorph/ui/PayrollUIHelper.java
+/Users/riangacula/Documents/NetBeansProjects/MotorPHPayrollSystem/src/main/java/com/motorph/ui/TableRenderHelper.java
