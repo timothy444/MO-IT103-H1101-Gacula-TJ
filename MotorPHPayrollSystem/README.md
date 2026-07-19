@@ -1,7 +1,7 @@
 # MotorPH Payroll System
 
 **Author:** Timothy Justin Sonido Gacula  
-**Date:** July 2026
+**Date:** July 19, 2026
 
 ---
 
